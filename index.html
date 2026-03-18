@@ -3,47 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIPS WORLD | ADMIN FULL</title>
+    <title>GIPS WORLD | VIEW ONLY</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap');
-        :root { --primary: #ff4757; --accent: #ffa502; --dark: #2f3542; --green: #2ecc71; }
+        :root { --primary: #ff4757; --accent: #ffa502; --dark: #2f3542; }
         body { background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); min-height: 100vh; font-family: 'Comfortaa', cursive; margin: 0; color: var(--dark); padding-bottom: 80px; }
-        
         button { background: var(--primary); color: white; border: 3px solid var(--dark); padding: 10px; border-radius: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 var(--dark); transition: 0.2s; width: 100%; font-family: inherit; }
         button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--dark); }
-        
         input, textarea { width: 100%; padding: 12px; border-radius: 15px; border: 3px solid var(--dark); margin-bottom: 10px; box-sizing: border-box; font-family: inherit; outline: none; }
-        
         header { background: white; padding: 12px 20px; border-radius: 25px; border: 3px solid var(--dark); box-shadow: 0 6px 0 var(--dark); margin: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
         .search-container { position: sticky; top: 10px; z-index: 2000; margin: 0 15px 15px 15px; }
         #searchBox { background: white; border: 3px solid var(--dark); box-shadow: 0 5px 0 var(--dark); margin-bottom: 0; }
-        
         #casesList { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 10px; }
         .card { background: white; border-radius: 20px; border: 3px solid var(--dark); overflow: hidden; box-shadow: 0 5px 0 var(--dark); display: flex; flex-direction: column; }
         .card img { width: 100%; height: auto; border-bottom: 3px solid var(--dark); cursor: zoom-in; }
         .card-body { padding: 10px; text-align: center; }
-        
         #cartBtn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 3px solid var(--dark); box-shadow: 0 5px 0 var(--dark); cursor: pointer; z-index: 3000; font-size: 25px; }
         #cartCount { position: absolute; top: -5px; right: -5px; background: var(--primary); color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; display: flex; justify-content: center; align-items: center; border: 2px solid var(--dark); }
-        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: white; padding: 20px; border-radius: 30px; border: 4px solid var(--dark); width: 85%; max-width: 350px; text-align: center; }
-        
         #fullView { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; align-items: center; justify-content: center; }
         #fullImg { max-width: 95%; max-height: 90%; border-radius: 15px; }
-
         .admin-section { background: white; padding: 15px; border: 3px solid var(--dark); margin: 15px; border-radius: 20px; box-shadow: 0 5px 0 var(--dark); }
-        .user-row { display: flex; justify-content: space-between; align-items: center; background: #f1f2f6; padding: 8px 12px; border-radius: 12px; margin-bottom: 6px; border: 2px solid var(--dark); font-size: 11px; }
     </style>
 </head>
 <body>
-
     <div id="loginScreen" style="position:fixed; inset:0; display:flex; justify-content:center; align-items:center; z-index:10000; background:inherit;">
         <div style="background:white; padding:25px; border-radius:35px; width:280px; text-align:center; border:4px solid var(--dark); box-shadow:0 10px 0 var(--dark);">
-            <h2 style="margin-top:0">GIPS WORLD 🗿</h2>
+            <h2>GIPS WORLD 🗿</h2>
             <input type="text" id="userLogin" placeholder="ЛОГИН">
             <input type="password" id="userPass" placeholder="ПАРОЛЬ">
             <button onclick="auth('login')" style="background:#2ed573; margin-bottom:8px;">ВОЙТИ</button>
@@ -58,7 +47,6 @@
             <h3>КОРЗИНА 🎁</h3>
             <div id="cartList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; text-align:left; font-size:13px;"></div>
             <h4 id="totalSum">0 MDL</h4>
-            <button onclick="sendOrder()" style="background:var(--green); margin-bottom:10px;">В MESSENGER ✅</button>
             <button onclick="toggleCart(false)" style="background:#666;">ЗАКРЫТЬ</button>
         </div>
     </div>
@@ -66,163 +54,38 @@
     <div id="fullView" onclick="this.style.display='none'"><img id="fullImg"></div>
 
     <div id="mainContent" style="display:none;">
-        <header>
-            <span id="welcomeName" style="font-size:12px; font-weight:bold;"></span>
-            <div onclick="location.reload()" style="color:red; cursor:pointer; font-weight:bold; font-size:12px;">ВЫЙТИ</div>
-        </header>
-
-        <div class="search-container">
-            <input type="text" id="searchBox" placeholder="Найти фигурку..." oninput="filterProducts()">
-        </div>
-
-        <div id="adminPanel" style="display:none;">
-            <div class="admin-section">
-                <h4 style="margin-top:0">ДОБАВИТЬ ТОВАР 🛠️</h4>
-                <input type="text" id="pName" placeholder="Название">
-                <textarea id="pDesc" placeholder="Описание"></textarea>
-                <input type="number" id="pPrice" placeholder="Цена MDL">
-                <input type="file" id="pFile" accept="image/*">
-                <button onclick="addItem()">ОПУБЛИКОВАТЬ</button>
-            </div>
-            
-            <div class="admin-section" style="background:#f9f9f9;">
-                <h4 style="margin:0 0 10px 0">ПОЛЬЗОВАТЕЛИ 👥</h4>
-                <div id="usersList"></div>
-            </div>
-        </div>
-
+        <header><span id="welcomeName" style="font-size:12px; font-weight:bold;"></span><div onclick="location.reload()" style="color:red; cursor:pointer; font-weight:bold; font-size:12px;">ВЫЙТИ</div></header>
+        <div class="search-container"><input type="text" id="searchBox" placeholder="Найти фигурку..." oninput="filterProducts()"></div>
+        <div id="adminPanel" style="display:none;"><div class="admin-section"><h4>ТОВАР 🛠️</h4><input type="text" id="pName" placeholder="Название"><textarea id="pDesc" placeholder="Описание"></textarea><input type="number" id="pPrice" placeholder="Цена MDL"><input type="file" id="pFile" accept="image/*"><button onclick="addItem()">ОПУБЛИКОВАТЬ</button></div></div>
         <div id="casesList"></div>
     </div>
 
     <script>
-        const MY_PHONE = '37378198500'; // Впиши сюда свой номер (начинай с 373)
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBY4paxe63lYqRgVE0PNWmrfBk1P2St-ek", 
-            authDomain: "gips-1cf7f.firebaseapp.com", 
-            projectId: "gips-1cf7f", 
-            databaseURL: "https://gips-1cf7f-default-rtdb.firebaseio.com" 
-        };
+        const firebaseConfig = { apiKey: "AIzaSyBY4paxe63lYqRgVE0PNWmrfBk1P2St-ek", authDomain: "gips-1cf7f.firebaseapp.com", projectId: "gips-1cf7f", databaseURL: "https://gips-1cf7f-default-rtdb.firebaseio.com" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         let isAdmin = false, cart = JSON.parse(localStorage.getItem('gips_cart')) || [], allProducts = [];
 
         function auth(mode) {
-            const l = document.getElementById('userLogin').value.trim().toLowerCase();
-            const p = document.getElementById('userPass').value.trim();
-            if(!l || !p) return alert("Заполни поля!");
-            
+            const l = document.getElementById('userLogin').value.trim().toLowerCase(), p = document.getElementById('userPass').value.trim();
+            if(!l || !p) return;
             if(l === 'admin' && p === '777') { isAdmin = true; proceed('ADMIN'); }
             else {
                 const ref = db.ref('users/'+l);
-                if(mode === 'reg') ref.set({password:p}).then(()=>alert("Зарегистрирован!"));
-                else ref.once('value', s => { if(s.val() && s.val().password === p) proceed(l); else alert("Неверно!"); });
+                if(mode === 'reg') ref.set({password:p}).then(()=>alert("Готово!"));
+                else ref.once('value', s => { if(s.val() && s.val().password === p) proceed(l); else alert("Ошибка!"); });
             }
         }
-
-        function proceed(name) {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('welcomeName').innerText = "ПРИВЕТ, " + name.toUpperCase();
-            if(isAdmin) { 
-                document.getElementById('adminPanel').style.display = 'block'; 
-                loadUsers(); 
-            }
-            updateCartUI(); loadData();
-        }
-
-        function loadUsers() {
-            db.ref('users').on('value', s => {
-                const container = document.getElementById('usersList');
-                container.innerHTML = "";
-                const data = s.val(); if(!data) return;
-                Object.entries(data).forEach(([login, info]) => {
-                    container.innerHTML += `<div class="user-row">
-                        <span><b>${login}</b>: ${info.password}</span>
-                        <span onclick="db.ref('users/${login}').remove()" style="color:red; cursor:pointer; font-weight:bold;">[УДАЛИТЬ]</span>
-                    </div>`;
-                });
-            });
-        }
-
-        async function addItem() {
-            const file = document.getElementById('pFile').files[0], 
-                  name = document.getElementById('pName').value, 
-                  desc = document.getElementById('pDesc').value, 
-                  price = document.getElementById('pPrice').value;
-            if(!file || !name || !price) return alert("Заполни всё!");
-            
-            const r = new FileReader(); r.readAsDataURL(file);
-            r.onload = (e) => {
-                const img = new Image(); img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas'); 
-                    canvas.width = 1000; canvas.height = img.height * (1000/img.width);
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    db.ref('products').push({ name, desc, price: Number(price), img: canvas.toDataURL('image/jpeg', 0.8) })
-                    .then(() => {
-                        alert("Товар добавлен!");
-                        document.getElementById('pName').value = '';
-                        document.getElementById('pDesc').value = '';
-                        document.getElementById('pPrice').value = '';
-                    });
-                }
-            }
-        }
-
+        function proceed(name) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('mainContent').style.display = 'block'; document.getElementById('welcomeName').innerText = "ПРИВЕТ, " + name.toUpperCase(); if(isAdmin) document.getElementById('adminPanel').style.display = 'block'; updateCartUI(); loadData(); }
+        async function addItem() { const file = document.getElementById('pFile').files[0], n = document.getElementById('pName').value, d = document.getElementById('pDesc').value, pr = document.getElementById('pPrice').value; if(!file || !n || !pr) return alert("Заполни!"); const r = new FileReader(); r.readAsDataURL(file); r.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width = 1000; canvas.height = img.height * (1000/img.width); canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); db.ref('products').push({ name:n, desc:d, price:Number(pr), img:canvas.toDataURL('image/jpeg', 0.8) }).then(() => alert("Ок!")); } } }
         function loadData() { db.ref('products').on('value', s => { allProducts = s.val() ? Object.entries(s.val()).reverse() : []; renderProducts(allProducts); }); }
-
-        function renderProducts(products) {
-            const list = document.getElementById('casesList'); list.innerHTML = "";
-            products.forEach(([id, v]) => {
-                list.innerHTML += `<div class="card">
-                    <img src="${v.img}" onclick="openFull('${v.img}')">
-                    <div class="card-body">
-                        <b style="font-size:12px;">${v.name}</b>
-                        <p style="font-size:10px; color:gray; margin:4px 0;">${v.desc || ''}</p>
-                        <div style="color:var(--accent); font-weight:bold; margin-bottom:5px; font-size:12px;">${v.price} MDL</div>
-                        <button onclick="addToCart('${id}', '${v.name}', ${v.price})" style="font-size:10px; padding:6px;">В КОРЗИНУ</button>
-                        ${isAdmin ? `<div onclick="db.ref('products/${id}').remove()" style="color:red; font-size:10px; margin-top:8px; cursor:pointer;">УДАЛИТЬ ТОВАР</div>` : ""}
-                    </div>
-                </div>`;
-            });
-        }
-
-        function filterProducts() {
-            const q = document.getElementById('searchBox').value.toLowerCase();
-            renderProducts(allProducts.filter(([id, v]) => v.name.toLowerCase().includes(q) || (v.desc && v.desc.toLowerCase().includes(q))));
-        }
-
-        function addToCart(id, n, p) {
-            const i = cart.findIndex(it => it.id === id);
-            if (i > -1) cart[i].count++; else cart.push({id, n, p, count: 1});
-            localStorage.setItem('gips_cart', JSON.stringify(cart)); updateCartUI();
-        }
-
-        function updateCartUI() {
-            const list = document.getElementById('cartList'); list.innerHTML = "";
-            let tc = 0, ts = 0;
-            cart.forEach((it, i) => {
-                tc += it.count; ts += (it.p * it.count);
-                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:3px;">
-                    <span>${it.n} (x${it.count})</span>
-                    <b>${it.p * it.count} MDL <span onclick="remCart(${i})" style="color:red; cursor:pointer; margin-left:5px;">✕</span></b>
-                </div>`;
-            });
-            document.getElementById('cartCount').innerText = tc;
-            document.getElementById('totalSum').innerText = ts + " MDL";
-        }
-
+        function renderProducts(p) { const list = document.getElementById('casesList'); list.innerHTML = ""; p.forEach(([id, v]) => { list.innerHTML += `<div class="card"><img src="${v.img}" onclick="openFull('${v.img}')"><div class="card-body"><b>${v.name}</b><p style="font-size:10px; color:gray; margin:5px 0;">${v.desc || ''}</p><div style="color:var(--accent); font-weight:bold;">${v.price} MDL</div><button onclick="addToCart('${id}', '${v.name}', ${v.price})" style="font-size:10px;">В КОРЗИНУ</button>${isAdmin ? `<div onclick="db.ref('products/${id}').remove()" style="color:red; font-size:10px; margin-top:8px; cursor:pointer;">УДАЛИТЬ ТОВАР</div>` : ""}</div></div>`; }); }
+        function filterProducts() { const q = document.getElementById('searchBox').value.toLowerCase(); renderProducts(allProducts.filter(([id, v]) => v.name.toLowerCase().includes(q) || (v.desc && v.desc.toLowerCase().includes(q)))); }
+        function addToCart(id, n, p) { const i = cart.findIndex(it => it.id === id); if (i > -1) cart[i].count++; else cart.push({id, n, p, count: 1}); localStorage.setItem('gips_cart', JSON.stringify(cart)); updateCartUI(); }
+        function updateCartUI() { const list = document.getElementById('cartList'); list.innerHTML = ""; let tc = 0, ts = 0; cart.forEach((it, i) => { tc += it.count; ts += (it.p * it.count); list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #eee;"><span>${it.n} (x${it.count})</span><b>${it.p * it.count} MDL <span onclick="remCart(${i})" style="color:red; cursor:pointer;">✕</span></b></div>`; }); document.getElementById('cartCount').innerText = tc; document.getElementById('totalSum').innerText = ts + " MDL"; }
         function remCart(i) { if(cart[i].count > 1) cart[i].count--; else cart.splice(i, 1); localStorage.setItem('gips_cart', JSON.stringify(cart)); updateCartUI(); }
         function toggleCart(s) { document.getElementById('cartModal').style.display = s ? 'flex' : 'none'; }
         function openFull(s) { document.getElementById('fullImg').src = s; document.getElementById('fullView').style.display = 'flex'; }
-
-        function sendOrder() {
-            if(!cart.length) return alert("Корзина пуста!");
-            let text = "Здравствуйте! Хочу заказать:\n";
-            cart.forEach(it => text += `- ${it.n} (x${it.count}): ${it.p * it.count} MDL\n`);
-            text += `\nИТОГО: ${document.getElementById('totalSum').innerText}`;
-            window.open(`https://wa.me/${MY_PHONE}?text=${encodeURIComponent(text)}`);
-        }
     </script>
 </body>
 </html>
