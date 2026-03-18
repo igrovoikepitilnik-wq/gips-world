@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIPS WORLD | HD</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap');
+        
+        :root { --primary: #ff4757; --accent: #ffa502; --dark: #2f3542; }
+
+        body { 
+            background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%); 
+            min-height: 100vh; font-family: 'Comfortaa', cursive; margin: 0; color: var(--dark);
+            padding-bottom: 100px;
+        }
+
+        button { 
+            background: var(--primary); color: white; border: 3px solid var(--dark); 
+            padding: 15px; border-radius: 25px; font-weight: bold; cursor: pointer; 
+            box-shadow: 0 6px 0 var(--dark); transition: 0.2s; width: 100%; font-family: inherit;
+        }
+        button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--dark); }
+
+        input, textarea { 
+            width: 100%; padding: 15px; border-radius: 20px; border: 3px solid var(--dark); 
+            margin-bottom: 12px; box-sizing: border-box; font-family: inherit; outline: none; font-size: 16px;
+        }
+
+        header { 
+            background: white; padding: 15px 25px; border-radius: 30px; border: 4px solid var(--dark); 
+            box-shadow: 0 8px 0 var(--dark); margin: 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* ВЕРТИКАЛЬНЫЙ СПИСОК (ОДИН ТОВАР В РЯД) */
+        #casesList { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 25px; 
+            padding: 0 20px; 
+        }
+
+        .card { 
+            background: white; border-radius: 35px; border: 4px solid var(--dark); 
+            overflow: hidden; box-shadow: 0 10px 0 var(--dark); display: flex; flex-direction: column;
+        }
+        
+        /* Качественное отображение фото */
+        .card img { 
+            width: 100%; 
+            height: auto; 
+            max-height: 400px; 
+            object-fit: cover; 
+            border-bottom: 4px solid var(--dark); 
+            background: #eee;
+        }
+
+        .card-body { padding: 20px; text-align: center; }
+        .price-tag { 
+            background: var(--accent); color: white; padding: 6px 15px; 
+            border-radius: 20px; border: 3px solid var(--dark); 
+            display: inline-block; margin-bottom: 10px; font-size: 18px; 
+        }
+        .desc-text { font-size: 14px; color: #555; margin-bottom: 15px; display: block; }
+
+        #cartBtn { 
+            position: fixed; bottom: 25px; right: 25px; width: 75px; height: 75px; 
+            background: var(--accent); border-radius: 50%; display: flex; 
+            justify-content: center; align-items: center; border: 4px solid var(--dark); 
+            box-shadow: 0 8px 0 var(--dark); cursor: pointer; z-index: 1000; font-size: 30px;
+        }
+        #cartCount { 
+            position: absolute; top: -5px; right: -5px; background: var(--primary); 
+            color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 14px; 
+            display: flex; justify-content: center; align-items: center; border: 2px solid var(--dark);
+        }
+
+        #fullView { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; align-items: center; justify-content: center; }
+        #fullImg { max-width: 95%; max-height: 90%; border-radius: 20px; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; padding: 25px; border-radius: 40px; border: 4px solid var(--dark); width: 85%; max-width: 350px; text-align: center; }
+
+        #loginScreen { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; z-index: 10000; background: inherit; }
+        .auth-box { background: white; padding: 30px; border-radius: 40px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 12px 0 var(--dark); border: 4px solid var(--dark); }
+
+        @media (min-width: 800px) { 
+            #casesList { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .card { width: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <div class="auth-box">
+            <h1 style="margin-top:0">GIPS WORLD 🗿</h1>
+            <input type="text" id="userLogin" placeholder="ЛОГИН">
+            <input type="password" id="userPass" placeholder="ПАРОЛЬ">
+            <button onclick="auth('login')" style="background: #2ed573; margin-bottom: 12px;">ВОЙТИ</button>
+            <button onclick="auth('reg')">РЕГИСТРАЦИЯ</button>
+        </div>
+    </div>
+
+    <div id="cartBtn" onclick="toggleCart(true)">
+        🛒 <div id="cartCount">0</div>
+    </div>
+
+    <div id="fullView" onclick="this.style.display='none'"><img id="fullImg"></div>
+
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <h2>КОРЗИНА 🎁</h2>
+            <div id="cartList" style="max-height: 250px; overflow-y:auto; margin-bottom:15px; text-align: left;"></div>
+            <h3 id="totalSum">0 MDL</h3>
+            <button onclick="toggleCart(false)" style="background:#666; box-shadow: 0 4px 0 #333;">ЗАКРЫТЬ</button>
+        </div>
+    </div>
+
+    <div id="mainContent" style="display:none;">
+        <header>
+            <span id="welcomeName" style="font-size: 14px; font-weight: bold;"></span>
+            <div onclick="location.reload()" style="color:red; cursor:pointer; font-weight:bold;">ВЫЙТИ</div>
+        </header>
+
+        <div id="adminPanel" style="display:none; background:white; padding:20px; border-radius:30px; border:4px solid var(--dark); margin: 20px; box-shadow: 0 8px 0 var(--dark);">
+            <h3 style="margin:0 0 15px 0">НОВЫЙ ТОВАР 🛠️</h3>
+            <input type="text" id="pName" placeholder="Название">
+            <textarea id="pDesc" placeholder="Описание (размеры, материал...)"></textarea>
+            <input type="number" id="pPrice" placeholder="Цена в MDL">
+            <input type="file" id="pFile" accept="image/*">
+            <button id="addBtn" onclick="addItem()">ОПУБЛИКОВАТЬ HD</button>
+        </div>
+
+        <div id="casesList"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBY4paxe63lYqRgVE0PNWmrfBk1P2St-ek",
+            authDomain: "gips-1cf7f.firebaseapp.com",
+            projectId: "gips-1cf7f",
+            databaseURL: "https://gips-1cf7f-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let isAdmin = false;
+        let cart = JSON.parse(localStorage.getItem('gips_cart')) || [];
+
+        function auth(mode) {
+            const l = document.getElementById('userLogin').value.trim().toLowerCase();
+            const p = document.getElementById('userPass').value.trim();
+            if(!l || !p) return;
+            if(l === 'admin' && p === '777') { isAdmin = true; proceed('ADMIN'); }
+            else {
+                const ref = db.ref('users/'+l);
+                if(mode === 'reg') ref.set({password:p}).then(()=>alert("Аккаунт готов!"));
+                else ref.once('value', s => {
+                    if(s.val() && s.val().password === p) { isAdmin=false; proceed(l); } else alert("Ошибка!");
+                });
+            }
+        }
+
+        function proceed(name) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('welcomeName').innerText = "ПРИВЕТ, " + name.toUpperCase();
+            if(isAdmin) document.getElementById('adminPanel').style.display = 'block';
+            updateCartUI();
+            loadData();
+        }
+
+        // УЛУЧШЕННАЯ ЗАГРУЗКА ФОТО (HD)
+        async function addItem() {
+            const btn = document.getElementById('addBtn');
+            const file = document.getElementById('pFile').files[0];
+            const name = document.getElementById('pName').value.trim();
+            const desc = document.getElementById('pDesc').value.trim();
+            const price = document.getElementById('pPrice').value;
+            if(!file || !name || !price) return alert("Заполни всё!");
+
+            btn.innerText = "ОБРАБОТКА HD..."; btn.disabled = true;
+            
+            const r = new FileReader(); 
+            r.readAsDataURL(file);
+            r.onload = (e) => {
+                const img = new Image(); 
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Увеличили разрешение до 1080px для четкости
+                    const targetWidth = 1080; 
+                    const scale = targetWidth / img.width;
+                    canvas.width = targetWidth; 
+                    canvas.height = img.height * scale;
+                    
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Повысили качество до 0.8
+                    const b64 = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    db.ref('products').push({
+                        name: name, desc: desc, price: Number(price), img: b64
+                    }).then(() => { 
+                        btn.innerText = "ОПУБЛИКОВАТЬ HD"; btn.disabled = false;
+                        document.getElementById('pName').value = "";
+                        document.getElementById('pDesc').value = "";
+                        document.getElementById('pPrice').value = "";
+                        document.getElementById('pFile').value = "";
+                        alert("Товар добавлен в HD! ✅");
+                    });
+                }
+            }
+        }
+
+        function loadData() {
+            db.ref('products').on('value', s => {
+                const list = document.getElementById('casesList');
+                list.innerHTML = "";
+                const data = s.val();
+                if(!data) return;
+                Object.entries(data).reverse().forEach(([id, v]) => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <img src="${v.img}" onclick="openFull('${v.img}')">
+                        <div class="card-body">
+                            <div style="font-weight:bold; font-size:18px; margin-bottom:5px;">${v.name}</div>
+                            <span class="desc-text">${v.desc || ''}</span>
+                            <div class="price-tag">${v.price} MDL</div>
+                            <button onclick="addToCart('${v.name}', ${v.price})">ДОБАВИТЬ В КОРЗИНУ</button>
+                            ${isAdmin ? `<div onclick="delItem('${id}')" style="color:red; font-size:12px; margin-top:15px; cursor:pointer; font-weight:bold">УДАЛИТЬ ТОВАР 🗑️</div>` : ""}
+                        </div>`;
+                    list.appendChild(card);
+                });
+            });
+        }
+
+        function addToCart(n, p) {
+            cart.push({n, p});
+            localStorage.setItem('gips_cart', JSON.stringify(cart));
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCount').innerText = cart.length;
+            const list = document.getElementById('cartList');
+            list.innerHTML = ""; let total = 0;
+            cart.forEach((item, i) => {
+                total += item.p;
+                list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:2px dashed #eee; padding-bottom:5px;">
+                    <span style="font-size:14px;">${item.n}</span>
+                    <b>${item.p} MDL <span onclick="removeFromCart(${i})" style="color:red; cursor:pointer; margin-left:10px;">✕</span></b>
+                </div>`;
+            });
+            document.getElementById('totalSum').innerText = "ИТОГО: " + total + " MDL";
+        }
+
+        function removeFromCart(i) {
+            cart.splice(i, 1);
+            localStorage.setItem('gips_cart', JSON.stringify(cart));
+            updateCartUI();
+        }
+
+        function openFull(src) { document.getElementById('fullImg').src = src; document.getElementById('fullView').style.display = 'flex'; }
+        function toggleCart(show) { document.getElementById('cartModal').style.display = show ? 'flex' : 'none'; }
+        window.delItem = id => { if(confirm("Удалить?")) db.ref('products/' + id).remove(); }
+    </script>
+</body>
+</html>
